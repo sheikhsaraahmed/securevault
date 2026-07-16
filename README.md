@@ -1,12 +1,18 @@
 # 🔐 SecureVault
 
+![Python](https://img.shields.io/badge/Python-3.14-3776AB?style=for-the-badge&logo=python&logoColor=white)
+![AES-256](https://img.shields.io/badge/Encryption-AES--256--CBC-red?style=for-the-badge&logo=letsencrypt&logoColor=white)
+![HMAC](https://img.shields.io/badge/Integrity-HMAC--SHA256-orange?style=for-the-badge&logo=verizon&logoColor=white)
+![Tkinter](https://img.shields.io/badge/GUI-Tkinter-blue?style=for-the-badge&logo=python&logoColor=white)
+![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)
+
 A desktop application for encrypting and decrypting files securely using AES-256 encryption, built with Python and Tkinter.
 
 ---
 
 ## 📋 Project Description
 
-SecureVault is a cybersecurity-focused desktop application that allows users to encrypt any file (PDF, JPG, DOCX, PNG, etc.) using a password and decrypt it back using the same password. It uses industry-standard cryptographic techniques to ensure files are protected against brute-force attacks, tampering, and pattern analysis.
+SecureVault is a cryptography focused desktop application that allows users to encrypt any file (PDF, JPG, DOCX, PNG, etc.) using a password and decrypt it back using the same password. It uses industry-standard cryptographic techniques to ensure files are protected against brute-force attacks, tampering, and pattern analysis.
 
 ---
 
@@ -53,6 +59,8 @@ securevault-1/
 │
 ├── encrypted_files/             # All .enc files are saved here automatically
 │
+├── fuzzy_search.py              # Typo-tolerant keyword search over encrypted file tags (v2)
+│
 └── requirements.txt             # Project dependencies
 
 ---
@@ -96,6 +104,25 @@ python ui.py
 - **Brute-force lockout** — Application exits after 3 wrong password attempts
 
 ---
+## 🔍 New in v2: Fuzzy Keyword Search over Encrypted Tags
+
+SecureVault v2 adds typo-tolerant keyword search, so files can be found by tag even with small spelling mistakes, without ever storing tags in plaintext.
+
+Inspired by the wildcard-based fuzzy keyword search technique from:
+> J. Wang, H. Ma, Q. Tang, J. Li, H. Zhu, S. Ma, X. Chen, "Efficient Verifiable Fuzzy Keyword Search over Encrypted Data in Cloud Computing," *ComSIS* Vol. 10, No. 2, 2013.
+
+**How it works:**
+- Each tag generates a set of wildcard variants (e.g. `bank` → `b*nk`, `ban*`, `*bank`, etc.), covering all single-character edits
+- Every variant is hashed with HMAC-SHA256 (the same primitive SecureVault already uses for integrity checks) to produce a **trapdoor**
+- Trapdoors are stored in an index mapping hash → file ID — the actual tag word is never stored
+- A search query goes through the same wildcard + hash process; if a query's trapdoor matches one already in the index, the file is found — even with a typo
+
+**Adapted for a local, single-user context:**
+- The original paper's symbol-tree index (built for large-scale cloud datasets) is replaced with a flat dictionary lookup, since SecureVault's scale doesn't need the O(1) tree optimization
+- The paper's verifiability layer (proving an untrusted cloud server didn't cheat) isn't included, since there's no untrusted server in this architecture — noted here as a natural extension if SecureVault is ever deployed in a client-server model
+
+---
+
 
 ## 🚀 Future Improvements
 
